@@ -7,7 +7,7 @@
 #define BUFFER_SIZE 1024
 #define SHELL_NAME "hsh"
 
-int main(int argc, char **argv)
+int main()
 {
     char *line = NULL;
     size_t bufsize = 0;
@@ -15,10 +15,13 @@ int main(int argc, char **argv)
     pid_t pid;
     int interactive = isatty(STDIN_FILENO);
     int status;
+	char *token;
+	char *args[10];
+	int i;
 
     while (1)
     {
-        if (interactive && argc == 1)
+        if (interactive)
             printf("($) ");
         characters_read = getline(&line, &bufsize, stdin);
         if (characters_read == -1)
@@ -27,9 +30,7 @@ int main(int argc, char **argv)
             line[characters_read - 1] = '\0';
         if (strcmp(line, "exit") == 0)
             break;
-        char *token;
-        char *args[10];
-        int i = 0;
+        i = 0;
         token = strtok(line, " ");
         while (token != NULL)
         {
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
         }
         else if (pid == 0)
         {
-            if (execve(args[0], args, NULL) == -1)
+            if (execve(args[0], args, __environ) == -1)
                 fprintf(stderr, "./%s: 1: %s: not found\n", SHELL_NAME, args[0]);
         }
         else
