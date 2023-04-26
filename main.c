@@ -44,7 +44,7 @@ int main(void)
 		{
 			args[0] = cmd;
 			args[1] = NULL;
-			execve(cmd, args, NULL);
+			execve(cmd, args, __environ);
 			printf("./shell: No such file or directory.\n");
 			exit(1);
 		} else
