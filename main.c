@@ -14,10 +14,12 @@ int main(void)
 	char cmd[100];
 	char *args[2];
 	pid_t pid;
+	int interactive = isatty(STDIN_FILENO);
 
 	while (1)
 	{
-		printf("$ ");
+		if (interactive)
+			printf("($) ");
 		if (fgets(cmd, 100, stdin) == NULL)
 		{
 			printf("\n");
@@ -46,9 +48,7 @@ int main(void)
 			printf("./shell: No such file or directory.\n");
 			exit(1);
 		} else
-		{
 			waitpid(pid, NULL, 0);
-		}
 	}
 	return (0);
 }
