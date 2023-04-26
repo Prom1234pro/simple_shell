@@ -7,82 +7,75 @@
 #define BUFFER_SIZE 1024
 #define SHELL_NAME "hsh"
 
-/**
- * main - main function
- * @argc: argument count
- * @argv: argument vector
- * Return: int
- */
-
-int main(int argc, char **argv, char **envp)
+int main()
 {
-	char *line = NULL, *token, *path, *cmd;
-	size_t bufsize = 0;
-	ssize_t characters_read;
-	pid_t pid;
-	int interactive = isatty(STDIN_FILENO);
-	int status;
-	int i;
+    char *line = NULL;
+    size_t bufsize = 0;
+    ssize_t characters_read;
+    pid_t pid;
+    int interactive = isatty(STDIN_FILENO);
+    int status;
+    char *token;
+    char *args[10];
+    int i;
+    char *path;
+    char *pathenv = getenv("PATH");
+    char *pathdir;
 
-	while (1)
-	{
-		if (interactive && argc == 1)
-			printf("($) ");
-		characters_read = getline(&line, &bufsize, stdin);
-		if (characters_read == -1)
-			break;
-		if (line[characters_read - 1] == '\n')
-			line[characters_read - 1] = '\0';
-		if (strcmp(line, "exit") == 0)
-			break;
-		cmd = strtok(line, " ");
-		if (!cmd)
-			continue;
-		path = strtok(getenv("PATH"), ":");
-		while (path)
-		{
-			char *command_path = malloc(strlen(path) + strlen(cmd) + 2);
-			sprintf(command_path, "%s/%s", path, cmd);
-			if (access(command_path, F_OK) != -1)
-			{
-				pid = fork();
-				if (pid == -1)
-				{
-					perror("fork");
-					exit(EXIT_FAILURE);
-				}
-				else if (pid == 0)
-				{
-					token = strtok(NULL, " ");
-					i = 1;
-					while (token)
-					{
-						argv[i] = token;
-						token = strtok(NULL, " ");
-						i++;
-					}
-					argv[i] = NULL;
-					if (execve(command_path, argv, envp) == -1)
-						fprintf(stderr, "./%s: 1: %s: not found\n", SHELL_NAME, cmd);
-				}
-				else
-				{
-					if (wait(&status) == -1)
-					{
-						perror("wait");
-						exit(EXIT_FAILURE);
-					}
-					break;
-				}
-			}
-			free(command_path);
-			path = strtok(NULL, ":");
-		}
-		if (!path)
-			fprintf(stderr, "./%s: 1: %s: not found\n", SHELL_NAME, cmd);
-	}
+    while (1)
+    {
+        if (interactive)
+            printf("($) ");
+        characters_read = getline(&line, &bufsize, stdin);
+        if (characters_read == -1)
+            break;
+        if (line[characters_read - 1] == '\n')
+            line[characters_read - 1] = '\0';
+        if (strcmp(line, "exit") == 0)
+            break;
+        i = 0;
+        token = strtok(line, " ");
+        while (token != NULL)
+        {
+            args[i++] = token;
+            token = strtok(NULL, " ");
+        }
+        args[i] = NULL;
+        pid = fork();
+        if (pid == -1)
+        {
+            perror("fork");
+            exit(EXIT_FAILURE);
+        }
+        else if (pid == 0)
+        {
+            pathdir = strtok(pathenv, ":");
+            while (pathdir != NULL)
+            {
+                path = malloc(strlen(pathdir) + strlen(args[0]) + 2);
+                sprintf(path, "%s/%s", pathdir, args[0]);
+                if (access(path, X_OK) == 0)
+                {
+                    if (execve(path, args, __environ) == -1)
+                        fprintf(stderr, "./%s: 1: %s: not found\n", SHELL_NAME, args[0]);
+                }
+                free(path);
+                pathdir = strtok(NULL, ":");
+            }
+            fprintf(stderr, "./%s: 1: %s: not found\n", SHELL_NAME, args[0]);
+            exit(EXIT_FAILURE);
+        }
+        else
+        {
+            if (wait(&status) == -1)
+            {
+                perror("wait");
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
 
-	if (line)
-		free(line);
-	exit(EXIT_SUCCESS);
+    if (line)
+        free(line);
+    exit(EXIT_SUCCESS);
 }
