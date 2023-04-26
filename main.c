@@ -9,7 +9,7 @@
  * Return:int
  */
 
-int main(void)
+int main(int argc, char **argv)
 {
 	char cmd[100];
 	char *args[2];
@@ -18,7 +18,7 @@ int main(void)
 
 	while (1)
 	{
-		if (interactive)
+		if (interactive && argc == 1)
 			printf("($) ");
 		if (fgets(cmd, 100, stdin) == NULL)
 		{
@@ -31,12 +31,12 @@ int main(void)
 			continue;
 		if (strchr(cmd, ' ') != NULL)
 		{
-			printf("./shell: No such file or directory.\n");
+			printf("%s: No such file or directory.\n", argv[0]);
 			continue;
 		}
 		if (access(cmd, X_OK) == -1)
 		{
-			printf("./shell: No such file or directory.\n");
+			printf("%s: No such file or directory.\n", argv[0]);
 			continue;
 		}
 		pid = fork();
@@ -45,7 +45,7 @@ int main(void)
 			args[0] = cmd;
 			args[1] = NULL;
 			execve(cmd, args, __environ);
-			printf("./shell: No such file or directory.\n");
+			printf("%s: No such file or directory.\n", argv[0]);
 			exit(1);
 		} else
 			waitpid(pid, NULL, 0);
