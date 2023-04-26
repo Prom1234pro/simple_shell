@@ -7,7 +7,7 @@
 #define BUFFER_SIZE 1024
 #define SHELL_NAME "hsh"
 
-int main()
+int main(int argc, char **argv)
 {
     char *line = NULL;
     size_t bufsize = 0;
@@ -15,8 +15,9 @@ int main()
     pid_t pid;
     int interactive = isatty(STDIN_FILENO);
     int status;
-	int i = 0;
-	char *token, *args[10];
+    char *args[10];
+    int i;
+	char *token;
 
     while (1)
     {
@@ -28,12 +29,31 @@ int main()
         if (line[characters_read - 1] == '\n')
             line[characters_read - 1] = '\0';
         if (strcmp(line, "exit") == 0)
-            break;
-        token = strtok(line, " ");
-        while (token != NULL && i < 10)
         {
+            if (argc > 1)
+            {
+                int exit_status = atoi(argv[1]);
+                exit(exit_status);
+            }
+            else
+            {
+                exit(EXIT_SUCCESS);
+            }
+        }
+        token = line;
+        i = 0;
+        while (*token != '\0')
+        {
+            while (*token == ' ')
+                token++;
+            if (*token == '\0')
+                break;
             args[i++] = token;
-            token = strtok(NULL, " ");
+            while (*token != ' ' && *token != '\0')
+                token++;
+            if (*token == '\0')
+                break;
+            *token++ = '\0';
         }
         args[i] = NULL;
         pid = fork();
@@ -46,7 +66,6 @@ int main()
         {
             if (execvp(args[0], args) == -1)
                 fprintf(stderr, "./%s: 1: %s: not found\n", SHELL_NAME, args[0]);
-            exit(EXIT_FAILURE);
         }
         else
         {
