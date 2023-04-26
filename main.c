@@ -4,51 +4,53 @@
 #include <string.h>
 #include <sys/wait.h>
 
-/**
- * main - main function
- * Return:int
- */
+#define BUFFER_SIZE 1024
+#define SHELL_NAME "hsh"
 
 int main(int argc, char **argv)
 {
-	char cmd[100];
-	char *args[2];
+	char *line = NULL;
+	size_t bufsize = 0;
+	ssize_t characters_read;
 	pid_t pid;
 	int interactive = isatty(STDIN_FILENO);
+	int status;
 
 	while (1)
 	{
 		if (interactive && argc == 1)
 			printf("($) ");
-		if (fgets(cmd, 100, stdin) == NULL)
-		{
-			printf("\n");
-			exit(0);
-		}
-		if (cmd[strlen(cmd) - 1] == '\n')
-			cmd[strlen(cmd) - 1] = '\0';
-		if (strlen(cmd) == 0)
-			continue;
-		if (strchr(cmd, ' ') != NULL)
-		{
-			printf("%s: No such file or directory.\n", argv[0]);
-			continue;
-		}
-		if (access(cmd, X_OK) == -1)
-		{
-			printf("%s: No such file or directory.\n", argv[0]);
-			continue;
-		}
+		characters_read = getline(&line, &bufsize, stdin);
+		if (characters_read == -1)
+			break;
+		if (line[characters_read - 1] == '\n')
+			line[characters_read - 1] = '\0';
+		if (strcmp(line, "exit") == 0)
+			break;
 		pid = fork();
-		if (pid == 0)
+		if (pid == -1)
 		{
-			args[0] = cmd;
-			args[1] = NULL;
-			execve(cmd, args, __environ);
-			printf("%s: No such file or directory.\n", argv[0]);
-			exit(1);
-		} else
-			waitpid(pid, NULL, 0);
+			perror("fork");
+			exit(EXIT_FAILURE);
+		}
+		else if (pid == 0)
+		{
+			argv[0] = line;
+			argv[1] = NULL;
+			if (execve(argv[0], argv, NULL) == -1)
+				fprintf(stderr, "./%s: 1: %s: not found\n", SHELL_NAME, argv[0]);
+		}
+		else
+		{
+			if (wait(&status) == -1)
+			{
+				perror("wait");
+				exit(EXIT_FAILURE);
+			}
+		}
 	}
-	return (0);
+
+	if (line)
+		free(line);
+	exit(EXIT_SUCCESS);
 }
