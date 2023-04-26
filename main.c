@@ -15,12 +15,8 @@ int main()
     pid_t pid;
     int interactive = isatty(STDIN_FILENO);
     int status;
-    char *token;
-    char *args[10];
-    int i;
-    char *path;
-    char *pathenv = getenv("PATH");
-    char *pathdir;
+	int i = 0;
+	char *token, *args[10];
 
     while (1)
     {
@@ -33,9 +29,8 @@ int main()
             line[characters_read - 1] = '\0';
         if (strcmp(line, "exit") == 0)
             break;
-        i = 0;
         token = strtok(line, " ");
-        while (token != NULL)
+        while (token != NULL && i < 10)
         {
             args[i++] = token;
             token = strtok(NULL, " ");
@@ -49,20 +44,8 @@ int main()
         }
         else if (pid == 0)
         {
-            pathdir = strtok(pathenv, ":");
-            while (pathdir != NULL)
-            {
-                path = malloc(strlen(pathdir) + strlen(args[0]) + 2);
-                sprintf(path, "%s/%s", pathdir, args[0]);
-                if (access(path, X_OK) == 0)
-                {
-                    if (execve(path, args, __environ) == -1)
-                        fprintf(stderr, "./%s: 1: %s: not found\n", SHELL_NAME, args[0]);
-                }
-                free(path);
-                pathdir = strtok(NULL, ":");
-            }
-            fprintf(stderr, "./%s: 1: %s: not found\n", SHELL_NAME, args[0]);
+            if (execvp(args[0], args) == -1)
+                fprintf(stderr, "./%s: 1: %s: not found\n", SHELL_NAME, args[0]);
             exit(EXIT_FAILURE);
         }
         else
