@@ -6,13 +6,49 @@
 
 /**
  * main - main function
- * @argc: command line arguments
- * @argv: command line arguments
- *
  * Return:int
  */
 
-int main(int argc, char **argv)
+int main(void)
 {
+	char cmd[100];
+	char *args[100];
+	pid_t pid;
+
+	while (1)
+	{
+		printf("$");
+		if (fgets(cmd, 100, stdin) == NULL)
+		{
+			printf("\n");
+			exit(0);
+		}
+		if (cmd[strlen(cmd) - 1] == '\n')
+			cmd[strlen(cmd) - 1] = '\0';
+		if (strlen(cmd) == 0)
+			continue;
+		if (strchr(cmd, ' ') != NULL)
+		{
+			printf("Error: Command must be a single word.\n");
+			continue;
+		}
+		if (access(cmd, X_OK) == -1)
+		{
+			printf("./shell: No such file or directory.\n");
+			continue;
+		}
+		pid = fork();
+		if (pid == 0)
+		{
+			args[0] = cmd;
+			args[1] = NULL;
+			execve(cmd, args, NULL);
+			printf("Error: Could not execute command.\n");
+			exit(1);
+		} else
+		{
+			waitpid(pid, NULL, 0);
+		}
+	}
 	return (0);
 }
