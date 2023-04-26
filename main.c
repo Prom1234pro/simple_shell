@@ -12,12 +12,12 @@
 int main(void)
 {
 	char cmd[100];
-	char *args[100];
+	char *args[2];
 	pid_t pid;
 
 	while (1)
 	{
-		printf("$");
+		printf("$ ");
 		if (fgets(cmd, 100, stdin) == NULL)
 		{
 			printf("\n");
@@ -29,7 +29,7 @@ int main(void)
 			continue;
 		if (strchr(cmd, ' ') != NULL)
 		{
-			printf("Error: Command must be a single word.\n");
+			printf("./shell: No such file or directory.\n");
 			continue;
 		}
 		if (access(cmd, X_OK) == -1)
@@ -43,7 +43,7 @@ int main(void)
 			args[0] = cmd;
 			args[1] = NULL;
 			execve(cmd, args, NULL);
-			printf("Error: Could not execute command.\n");
+			printf("./shell: No such file or directory.\n");
 			exit(1);
 		} else
 		{
