@@ -56,6 +56,25 @@ int main()
                 setenv("PWD", getcwd(NULL, 0), 1);
             }
         }
+        else if (strncmp(line, "setenv ", 7) == 0)
+        {
+            char *name = line + 7;
+            char *value = strchr(name, ' ');
+            if (value == NULL)
+            {
+                fprintf(stderr, "./%s: setenv: missing value\n", SHELL_NAME);
+                continue;
+            }
+            *value++ = '\0';
+            if (setenv(name, value, 1) == -1)
+                perror("setenv");
+        }
+        else if (strncmp(line, "unsetenv ", 9) == 0)
+        {
+            char *name = line + 9;
+            if (unsetenv(name) == -1)
+                perror("unsetenv");
+        }
         else
         {
             i = 0;
