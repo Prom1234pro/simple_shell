@@ -29,7 +29,15 @@ int main()
         if (line[characters_read - 1] == '\n')
             line[characters_read - 1] = '\0';
         if (strcmp(line, "exit") == 0)
-            break;
+        {
+            exit(status);
+        }
+        else if (strncmp(line, "exit ", 5) == 0)
+        {
+            char *code_str = line + 5;
+            status = atoi(code_str);
+            exit(status);
+        }
         else if (strncmp(line, "cd ", 3) == 0)
         {
             char *dir = line + 3;
